@@ -12,8 +12,10 @@ export default {
         const count = ref(0);
         const movies = ref([]);
         const currentMovieIndex = ref(0);
-        const searchMovies = ref([])
-
+        const searchMovies = ref([]);
+        const pageNum = ref(1);
+        const searchResults = ref(null);
+        const searchString = ref('');
         const getNewestMovies = async () => {
             const query = 'get/top50/?per_page=5&page=1'; // Example query for getting top 50 movies
             const response = await DBProvider.fetch(query);
@@ -22,24 +24,47 @@ export default {
                 movies.value = response.items;
             }
         };
-        const handleSearchData = (searchData) => {
-            // Update movies with search results in the main component
-            console.log('Received search data:', searchData);
-            searchMovies.value = searchData;
-            if (!searchData ||  searchData.total == 0) {
-                searchMovies.value = null
-            }
-            // Handle the search data here
-        };
+
+        getNewestMovies();
         const inc = () => {
 
         }
-        // Listen for the emitted event from vcnavbar
-        const navbarSearchHandler = (searchData) => {
-            handleSearchData(searchData);
-        };
-        getNewestMovies();
+        const searchData = async (searchQuery) => {
+            try {
+                const query = searchQuery ? searchQuery : '';
+                const newSearchResults = await DBProvider.fetch(`search/movie/${query}?per_page=12&page=${pageNum.value}`);
 
+                if (newSearchResults && newSearchResults.items) {
+                    searchResults.value = newSearchResults;
+                    searchMovies.value = newSearchResults.items;
+                } else {
+                    searchMovies.value = [];
+                }
+            } catch (error) {
+                console.error('Error occurred during search:', error);
+            }
+        };
+
+        const nextPage = async () => {
+            console.log(searchResults);
+            if (searchResults.value.page < searchResults.value.total_page) {
+
+                pageNum.value++;
+                await searchData(searchString.value);
+            }
+        };
+
+        const prevPage = async () => {
+            if (pageNum.value > 1) {
+                pageNum.value--;
+                await searchData(searchString.value);
+            }
+        };
+
+        const receiveEmit =  (searchQuery) => {
+            searchString.value = searchQuery;
+             searchData(searchQuery);
+        }
         const moveNext = () => {
             if (currentMovieIndex.value < movies.value.length - 1) {
                 currentMovieIndex.value++;
@@ -52,17 +77,17 @@ export default {
             }
         };
 
-        return { count, movies, moveNext, movePrev, currentMovieIndex, navbarSearchHandler,searchMovies };
+        return { count, movies, moveNext, movePrev, currentMovieIndex,searchMovies, receiveEmit,pageNum, nextPage, prevPage,searchResults };
     },
     template: `
     <div class="header p-2">
       <vcheader></vcheader>
     </div>
     <div class="vcnavbar">
-      <vcnavbar @search-data="navbarSearchHandler"></vcnavbar>
+      <vcnavbar @toggle-search="receiveEmit"></vcnavbar>
     </div>
     <div class="main-body">
-      <div v-if="!searchMovies" class="slider d-flex flex-row align-items-center justify-content-center">
+      <div v-if="searchMovies.length == 0" class="slider d-flex flex-row align-items-center justify-content-center">
         <button @click="movePrev" style="height: 50px;"> << </button>
         <div v-for="(movie, index) in movies" :key="movie.id" :style="{ 
                  transform: 'translateX(' + ((index - currentMovieIndex) * 100) + '%)', 
@@ -81,8 +106,8 @@ export default {
 
         <button @click="moveNext" style="height: 50px;"> >> </button>
       </div>
-      <div v-if="searchMovies" class="searchList row p-5">
-            <div v-for="movie in searchMovies.items" :key="movie.id" class="col-md-4 mb-4 ">
+      <div v-if="searchMovies.length > 0" class="searchList row p-5">
+            <div v-for="movie in searchMovies" :key="movie.id" class="col-md-4 mb-4 ">
                 <div class="card text-center align-items-center">
                     <img :src="movie.image" class="card-img-top" style="width: 100%;max-height:500px" :alt="movie.title">
                     <div class="card-body">
@@ -91,6 +116,14 @@ export default {
                     </div>
                 </div>
             </div>
+<!--            add pagination here please-->
+<!-- Pagination -->
+      <div class="pagination d-flex flex-row justify-content-between">
+        <button @click="prevPage" :disabled="pageNum === 1">Previous</button>
+        <span>Page {{ searchResults.page }} of {{ searchResults.total_page }}</span>
+        <button @click="nextPage" :disabled="pageNum === searchResults.total_pages">Next</button>
+      </div>
+    </div>
         </div>
     </div>
     <div class="footer"></div>
