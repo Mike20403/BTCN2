@@ -4,6 +4,9 @@ import movieData from './db/data.js';
 const moviesData = [
     ...movieData.Movies
 ];
+const mostpopular = [
+    ...movieData.MostPopularMovies
+]
 
 // DB Utility
 export const DBProvider = {
@@ -36,22 +39,23 @@ export const DBProvider = {
 
             case 'get':
                 const getQueryType = className.toLowerCase();
-
+                console.log(getQueryType)
                 switch (getQueryType) {
                     case 'top50':
                         const top50 = getPaginatedResults(moviesData.slice(0, 50), per_page, page);
                         return { type, class: className,  per_page,
-                            page, pattern: '', total: top50.length, items: top50 };
+                            page, pattern: pattern, total: top50.length, items: top50 };
 
                     case 'mostpopular':
                         // Example logic to sort by popularity or any other suitable criterion
-                        const mostPopular = moviesData.slice().sort((a, b) => b.popularity - a.popularity).slice(0, 50);
-                        return { type, class: className, pattern: '', total: 50, items: mostPopular };
+                        const mostPopular = getPaginatedResults(mostpopular.slice(0, 5),per_page, page);
+                        console.log(mostPopular)
+                        return { type, class: className, pattern: pattern, total: mostPopular.length, items: mostPopular };
 
-                    case 'topboxoffice':
+                    case 'toprated':
                         // Example logic to sort by box office revenue or any other suitable criterion
-                        const topBoxOffice = moviesData.slice().sort((a, b) => b.boxOffice - a.boxOffice).slice(0, 50);
-                        return { type, class: className, pattern: '', total: 50, items: topBoxOffice };
+                        const toprated = getPaginatedResults(moviesData.filter((movie) => movie.awards.includes('Top rated')) .slice(0, 50),per_page,page)
+                        return { type, class: className, pattern: pattern, total: toprated.length, items: toprated };
 
                     default:
                         return null;

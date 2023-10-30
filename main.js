@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { ref, computed, toRaw } from 'vue';
 import vcheader from './header.js';
 import vcnavbar from './navbar.js';
 import { DBProvider } from './dbutils.js';
@@ -12,10 +12,16 @@ export default {
         const count = ref(0);
         const movies = ref([]);
         const currentMovieIndex = ref(0);
+        const currentMovieGroupIndex = ref(0);
+        const currentMovieGroupIndex2 = ref(0);
         const searchMovies = ref([]);
         const pageNum = ref(1);
         const searchResults = ref(null);
         const searchString = ref('');
+        const top15Movies = ref([]);
+        const topratingMovies = ref([]);
+        const result = ref([]);
+        const result2 = ref([]);
         const getNewestMovies = async () => {
             const query = 'get/top50/?per_page=5&page=1'; // Example query for getting top 50 movies
             const response = await DBProvider.fetch(query);
@@ -24,8 +30,41 @@ export default {
                 movies.value = response.items;
             }
         };
+        const getTop15Movies = async () => {
+            const query = 'get/mostpopular/?per_page=15&page=1'; // Example query for getting most popular movies
+            const response = await DBProvider.fetch(query);
+
+            if (response && response.items) {
+                top15Movies.value = response.items;
+                const itemsPerGroup = 3;
+
+                for (let i = 0; i < top15Movies.value.length; i += itemsPerGroup) {
+                    result.value.push(toRaw(toRaw(top15Movies.value).slice(i, i + itemsPerGroup)));
+                    console.log(result)
+                }
+            }
+
+
+        };
+        const getTopRatingMovies = async () => {
+            const query = 'get/toprated/?per_page=15&page=1'; // Example query for getting most popular movies
+            const response = await DBProvider.fetch(query);
+            console.log(response)
+            if (response && response.items) {
+                topratingMovies.value = response.items;
+                const itemsPerGroup = 3;
+
+                for (let i = 0; i < topratingMovies.value.length; i += itemsPerGroup) {
+                    result2.value.push(toRaw(toRaw(topratingMovies.value).slice(i, i + itemsPerGroup)));
+                }
+                console.log(result2.value)
+            }
+        };
+
 
         getNewestMovies();
+        getTopRatingMovies();
+        getTop15Movies();
         const inc = () => {
 
         }
@@ -60,7 +99,6 @@ export default {
                 await searchData(searchString.value);
             }
         };
-
         const receiveEmit =  (searchQuery) => {
             searchString.value = searchQuery;
              searchData(searchQuery);
@@ -76,8 +114,32 @@ export default {
                 currentMovieIndex.value--;
             }
         };
+        const moveNextGr = () => {
+            if (currentMovieGroupIndex.value < result.value.length - 1) {
+                currentMovieGroupIndex.value++;
+            }
+        };
 
-        return { count, movies, moveNext, movePrev, currentMovieIndex,searchMovies, receiveEmit,pageNum, nextPage, prevPage,searchResults };
+        const movePrevGr = () => {
+            if (currentMovieGroupIndex.value > 0) {
+                currentMovieGroupIndex.value--;
+            }
+        };
+        const moveNextGr2 = () => {
+            if (currentMovieGroupIndex2.value < result2.value.length - 1) {
+                currentMovieGroupIndex2.value++;
+            }
+        };
+
+        const movePrevGr2 = () => {
+            if (currentMovieGroupIndex2.value > 0) {
+                currentMovieGroupIndex2.value--;
+            }
+        };
+
+        return { count, movies, moveNext, movePrev,moveNextGr, movePrevGr,moveNextGr2,movePrevGr2,currentMovieIndex,currentMovieGroupIndex,currentMovieGroupIndex2,searchMovies, receiveEmit,pageNum, nextPage, prevPage,
+            searchResults
+            ,top15Movies, topratingMovies,result,result2};
     },
     template: `
     <div class="header p-2">
@@ -103,9 +165,48 @@ export default {
             </div>
           </div>
         </div>
-
         <button @click="moveNext" style="height: 50px;"> >> </button>
       </div>
+      <h1 class="ml-5">Most Popular:</h1>
+  <div class="d-flex flex-row most-popular-slider align-items-center justify-content-center">
+  <button @click="movePrevGr" style="height: 50px;"> << </button>
+  <div v-for="(group, groupIndex) in result" :key="groupIndex"  :style="{ 
+           transform: 'translateX(' + ((groupIndex - currentMovieGroupIndex) * 100) + '%)', 
+           opacity: groupIndex === currentMovieGroupIndex ? 1 : 0, 
+           transition: 'transform 0.6s, opacity 1s' }" >
+    <div v-if="groupIndex === currentMovieGroupIndex" class="d-flex flex-row align-items-center justify-content-center movie-slide">
+           <div v-for="(film, index) in group" :key="index">
+      <div class="text-center" style="width: 400px">
+        <img style="width: 300px; height: 350px" :src="film.image" :alt="film.title" />
+        <h3>{{ film.title }}</h3>
+        <p>{{ film.plot }}</p>
+      </div>
+    </div>
+          </div>
+   
+  </div>
+  <button @click="moveNextGr" style="height: 50px;"> >> </button>
+</div>
+<h1 class="ml-5">Top rating:</h1>
+  <div class="d-flex flex-row most-popular-slider align-items-center justify-content-center">
+  <button @click="movePrevGr2" style="height: 50px;"> << </button>
+  <div v-for="(group, groupIndex) in result2" :key="groupIndex"  :style="{ 
+           transform: 'translateX(' + ((groupIndex - currentMovieGroupIndex2) * 100) + '%)', 
+           opacity: groupIndex === currentMovieGroupIndex2 ? 1 : 0, 
+           transition: 'transform 0.6s, opacity 1s' }" >
+    <div v-if="groupIndex === currentMovieGroupIndex2" class="d-flex flex-row align-items-center justify-content-center movie-slide">
+           <div v-for="(film, index) in group" :key="index">
+      <div class="text-center" style="width: 400px">
+        <img style="width: 300px; height: 350px" :src="film.image" :alt="film.title" />
+        <h3>{{ film.title }}</h3>
+        <p>{{ film.plot }}</p>
+      </div>
+    </div>
+          </div>
+   
+  </div>
+  <button @click="moveNextGr2" style="height: 50px;"> >> </button>
+</div>
       <div v-if="searchMovies.length > 0" class="searchList row p-5">
             <div v-for="movie in searchMovies" :key="movie.id" class="col-md-4 mb-4 ">
                 <div class="card text-center align-items-center">
@@ -125,7 +226,7 @@ export default {
       </div>
     </div>
         </div>
-    </div>
+   
     <div class="footer"></div>
   `,
 };
