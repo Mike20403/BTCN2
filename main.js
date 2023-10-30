@@ -1,4 +1,4 @@
-import { ref, computed, toRaw } from 'vue';
+import { ref, toRaw} from 'vue';
 import vcheader from './header.js';
 import vcnavbar from './navbar.js';
 import { DBProvider } from './dbutils.js';
@@ -22,6 +22,14 @@ export default {
         const topratingMovies = ref([]);
         const result = ref([]);
         const result2 = ref([]);
+        // ... your existing setup ...
+        const selectedMovie = ref(null);
+
+        const showMovieDetails = (movie) => {
+            console.log(movie)
+            selectedMovie.value = movie;
+        };
+
         const getNewestMovies = async () => {
             const query = 'get/top50/?per_page=5&page=1'; // Example query for getting top 50 movies
             const response = await DBProvider.fetch(query);
@@ -137,9 +145,17 @@ export default {
             }
         };
 
-        return { count, movies, moveNext, movePrev,moveNextGr, movePrevGr,moveNextGr2,movePrevGr2,currentMovieIndex,currentMovieGroupIndex,currentMovieGroupIndex2,searchMovies, receiveEmit,pageNum, nextPage, prevPage,
+        return { count, movies, moveNext,
+            movePrev,moveNextGr,
+            movePrevGr,moveNextGr2,movePrevGr2,
+            currentMovieIndex,
+            currentMovieGroupIndex,currentMovieGroupIndex2,
+            searchMovies,
+            receiveEmit,pageNum, nextPage, prevPage,
             searchResults
-            ,top15Movies, topratingMovies,result,result2};
+            ,top15Movies, topratingMovies,result,result2,
+            selectedMovie,
+            showMovieDetails,};
     },
     methods: {
         zoomIn(event) {
@@ -154,16 +170,27 @@ export default {
         },
     },
     template: `
-    <div class="header p-2">
-      <vcheader></vcheader>
-    </div> <div class="header p-2">
+     <div class="header p-2">
       <vcheader></vcheader>
     </div>
     <div class="vcnavbar">
       <vcnavbar @toggle-search="receiveEmit"></vcnavbar>
     </div>
     <div class="main-body">
-      <div v-if="searchMovies.length == 0" class="slider d-flex flex-row align-items-center justify-content-center">
+      <div v-if="selectedMovie" class="selected-movie-details ml-5 text-center d-flex flex-column" style="width: 800px">
+      <div class="movie-detail ml-5">
+        <h2>{{ selectedMovie.title }}</h2>
+        <img :src="selectedMovie.image" style="width: 500px;height: 700px " :alt="selectedMovie.title" />
+        <p>{{ selectedMovie.plot }}</p>
+      </div>
+      <div class="detail">
+      
+    </div>
+      
+      </div>
+    </div>
+    <div v-if="!selectedMovie">
+    <div v-if="searchMovies.length == 0" class="slider d-flex flex-row align-items-center justify-content-center">
         <button @click="movePrev" style="height: 50px;"> << </button>
         <div v-for="(movie, index) in movies" :key="movie.id" :style="{ 
           transform: 'translateX(' + ((index - currentMovieIndex) * 100) + '%)', 
@@ -182,6 +209,7 @@ export default {
                 :alt="movie.title"
                 @mouseover="zoomIn"
                 @mouseleave="zoomOut"
+                @click="showMovieDetails(movie)" 
               />
               <h3>{{ movie.title }}</h3>
               <p>{{ movie.plot }}</p>
@@ -190,8 +218,8 @@ export default {
         </div>
         <button @click="moveNext" style="height: 50px;"> >> </button>
       </div>
-      <h1 class="ml-5">Most Popular:</h1>
-      <div class="d-flex flex-row most-popular-slider align-items-center justify-content-center">
+      <h1 class="ml-5" v-if="searchMovies.length == 0" >Most Popular:</h1>
+      <div v-if="searchMovies.length == 0"  class="d-flex flex-row most-popular-slider align-items-center justify-content-center">
         <button @click="movePrevGr" style="height: 50px;"> << </button>
         <div
           v-for="(group, groupIndex) in result"
@@ -215,6 +243,7 @@ export default {
                   :alt="film.title"
                   @mouseover="zoomIn"
                   @mouseleave="zoomOut"
+                  @click="showMovieDetails(film)" 
                 />
                 <h3>{{ film.title }}</h3>
                 <p>{{ film.plot }}</p>
@@ -224,8 +253,8 @@ export default {
         </div>
         <button @click="moveNextGr" style="height: 50px;"> >> </button>
       </div>
-      <h1 class="ml-5">Top rating:</h1>
-      <div class="d-flex flex-row most-popular-slider align-items-center justify-content-center">
+      <h1 v-if="searchMovies.length == 0" class="ml-5">Top rating:</h1>
+      <div v-if="searchMovies.length == 0" class="d-flex flex-row most-popular-slider align-items-center justify-content-center">
         <button @click="movePrevGr2" style="height: 50px;"> << </button>
         <div
           v-for="(group, groupIndex) in result2"
@@ -249,6 +278,7 @@ export default {
                   :alt="film.title"
                   @mouseover="zoomIn"
                   @mouseleave="zoomOut"
+                  @click="showMovieDetails(film)" 
                 />
                 <h3>{{ film.title }}</h3>
                 <p>{{ film.plot }}</p>
@@ -268,6 +298,7 @@ export default {
               :alt="movie.title"
               @mouseover="zoomIn"
               @mouseleave="zoomOut"
+              @click="showMovieDetails(film)" 
             />
             <div class="card-body">
               <h5 class="card-title">{{ movie.title }}</h5>
@@ -283,6 +314,8 @@ export default {
         </div>
       </div>
     </div>
+</div>
+      
     <div class="footer"></div>
   `,
 };
