@@ -141,8 +141,22 @@ export default {
             searchResults
             ,top15Movies, topratingMovies,result,result2};
     },
+    methods: {
+        zoomIn(event) {
+            // Change the image size to make it larger when the mouse hovers over
+            event.target.style.transform = 'scale(1.3)'; // You can adjust the scale value to control the level of zoom
+            event.target.style.transition = 'transform 0.3s'; // Smoothly transition the change
+        },
+        zoomOut(event) {
+            // Revert the image size when the mouse leaves
+            event.target.style.transform = 'scale(1)';
+            event.target.style.transition = 'transform 0.3s';
+        },
+    },
     template: `
     <div class="header p-2">
+      <vcheader></vcheader>
+    </div> <div class="header p-2">
       <vcheader></vcheader>
     </div>
     <div class="vcnavbar">
@@ -152,14 +166,23 @@ export default {
       <div v-if="searchMovies.length == 0" class="slider d-flex flex-row align-items-center justify-content-center">
         <button @click="movePrev" style="height: 50px;"> << </button>
         <div v-for="(movie, index) in movies" :key="movie.id" :style="{ 
-                 transform: 'translateX(' + ((index - currentMovieIndex) * 100) + '%)', 
-                 opacity: index === currentMovieIndex ? 1 : 0, 
-                 transition: 'transform 0.6s, opacity 1s'
-               }">
-        
+          transform: 'translateX(' + ((index - currentMovieIndex) * 100) + '%)', 
+          opacity: index === currentMovieIndex ? 1 : 0, 
+          transition: 'transform 0.6s, opacity 1s'
+        }">
           <div v-if="index === currentMovieIndex" class="d-flex flex-column align-items-center justify-content-center movie-slide">
             <div class="text-center" style="width: 800px">
-              <img style="width: 600px;height: 700px" :src="movie.image" :alt="movie.title" />
+              <img
+                :style="{
+                  width: '600px',
+                  height: '700px',
+                  transition: 'transform 0.3s',
+                }"
+                :src="movie.image"
+                :alt="movie.title"
+                @mouseover="zoomIn"
+                @mouseleave="zoomOut"
+              />
               <h3>{{ movie.title }}</h3>
               <p>{{ movie.plot }}</p>
             </div>
@@ -168,65 +191,98 @@ export default {
         <button @click="moveNext" style="height: 50px;"> >> </button>
       </div>
       <h1 class="ml-5">Most Popular:</h1>
-  <div class="d-flex flex-row most-popular-slider align-items-center justify-content-center">
-  <button @click="movePrevGr" style="height: 50px;"> << </button>
-  <div v-for="(group, groupIndex) in result" :key="groupIndex"  :style="{ 
-           transform: 'translateX(' + ((groupIndex - currentMovieGroupIndex) * 100) + '%)', 
-           opacity: groupIndex === currentMovieGroupIndex ? 1 : 0, 
-           transition: 'transform 0.6s, opacity 1s' }" >
-    <div v-if="groupIndex === currentMovieGroupIndex" class="d-flex flex-row align-items-center justify-content-center movie-slide">
-           <div v-for="(film, index) in group" :key="index">
-      <div class="text-center" style="width: 400px">
-        <img style="width: 300px; height: 350px" :src="film.image" :alt="film.title" />
-        <h3>{{ film.title }}</h3>
-        <p>{{ film.plot }}</p>
-      </div>
-    </div>
-          </div>
-   
-  </div>
-  <button @click="moveNextGr" style="height: 50px;"> >> </button>
-</div>
-<h1 class="ml-5">Top rating:</h1>
-  <div class="d-flex flex-row most-popular-slider align-items-center justify-content-center">
-  <button @click="movePrevGr2" style="height: 50px;"> << </button>
-  <div v-for="(group, groupIndex) in result2" :key="groupIndex"  :style="{ 
-           transform: 'translateX(' + ((groupIndex - currentMovieGroupIndex2) * 100) + '%)', 
-           opacity: groupIndex === currentMovieGroupIndex2 ? 1 : 0, 
-           transition: 'transform 0.6s, opacity 1s' }" >
-    <div v-if="groupIndex === currentMovieGroupIndex2" class="d-flex flex-row align-items-center justify-content-center movie-slide">
-           <div v-for="(film, index) in group" :key="index">
-      <div class="text-center" style="width: 400px">
-        <img style="width: 300px; height: 350px" :src="film.image" :alt="film.title" />
-        <h3>{{ film.title }}</h3>
-        <p>{{ film.plot }}</p>
-      </div>
-    </div>
-          </div>
-   
-  </div>
-  <button @click="moveNextGr2" style="height: 50px;"> >> </button>
-</div>
-      <div v-if="searchMovies.length > 0" class="searchList row p-5">
-            <div v-for="movie in searchMovies" :key="movie.id" class="col-md-4 mb-4 ">
-                <div class="card text-center align-items-center">
-                    <img :src="movie.image" class="card-img-top" style="width: 100%;max-height:500px" :alt="movie.title">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ movie.title }}</h5>
-                        <!-- Add more details here if needed -->
-                    </div>
-                </div>
+      <div class="d-flex flex-row most-popular-slider align-items-center justify-content-center">
+        <button @click="movePrevGr" style="height: 50px;"> << </button>
+        <div
+          v-for="(group, groupIndex) in result"
+          :key="groupIndex"
+          :style="{ 
+            transform: 'translateX(' + ((groupIndex - currentMovieGroupIndex) * 100) + '%)', 
+            opacity: groupIndex === currentMovieGroupIndex ? 1 : 0, 
+            transition: 'transform 0.6s, opacity 1s'
+          }"
+        >
+          <div v-if="groupIndex === currentMovieGroupIndex" class="d-flex flex-row align-items-center justify-content-center movie-slide">
+            <div v-for="(film, index) in group" :key="index">
+              <div class="text-center" style="width: 400px">
+                <img
+                  :style="{
+                    width: '300px',
+                    height: '350px',
+                    transition: 'transform 0.3s',
+                  }"
+                  :src="film.image"
+                  :alt="film.title"
+                  @mouseover="zoomIn"
+                  @mouseleave="zoomOut"
+                />
+                <h3>{{ film.title }}</h3>
+                <p>{{ film.plot }}</p>
+              </div>
             </div>
-<!--            add pagination here please-->
-<!-- Pagination -->
-      <div class="pagination d-flex flex-row justify-content-between">
-        <button @click="prevPage" :disabled="pageNum === 1">Previous</button>
-        <span>Page {{ searchResults.page }} of {{ searchResults.total_page }}</span>
-        <button @click="nextPage" :disabled="pageNum === searchResults.total_pages">Next</button>
+          </div>
+        </div>
+        <button @click="moveNextGr" style="height: 50px;"> >> </button>
+      </div>
+      <h1 class="ml-5">Top rating:</h1>
+      <div class="d-flex flex-row most-popular-slider align-items-center justify-content-center">
+        <button @click="movePrevGr2" style="height: 50px;"> << </button>
+        <div
+          v-for="(group, groupIndex) in result2"
+          :key="groupIndex"
+          :style="{ 
+            transform: 'translateX(' + ((groupIndex - currentMovieGroupIndex2) * 100) + '%)', 
+            opacity: groupIndex === currentMovieGroupIndex2 ? 1 : 0, 
+            transition: 'transform 0.6s, opacity 1s'
+          }"
+        >
+          <div v-if="groupIndex === currentMovieGroupIndex2" class="d-flex flex-row align-items-center justify-content-center movie-slide">
+            <div v-for="(film, index) in group" :key="index">
+              <div class="text-center" style="width: 400px">
+                <img
+                  :style="{
+                    width: '300px',
+                    height: '350px',
+                    transition: 'transform 0.3s',
+                  }"
+                  :src="film.image"
+                  :alt="film.title"
+                  @mouseover="zoomIn"
+                  @mouseleave="zoomOut"
+                />
+                <h3>{{ film.title }}</h3>
+                <p>{{ film.plot }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button @click="moveNextGr2" style="height: 50px;"> >> </button>
+      </div>
+      <div v-if="searchMovies.length > 0" class="searchList row p-5">
+        <div v-for="movie in searchMovies" :key="movie.id" class="col-md-4 mb-4 ">
+          <div class="card text-center align-items-center">
+            <img
+              :src="movie.image"
+              class="card-img-top"
+              style="width: 100%;max-height:500px; transition: transform 0.3s;"
+              :alt="movie.title"
+              @mouseover="zoomIn"
+              @mouseleave="zoomOut"
+            />
+            <div class="card-body">
+              <h5 class="card-title">{{ movie.title }}</h5>
+              <!-- Add more details here if needed -->
+            </div>
+          </div>
+        </div>
+        <!-- Pagination -->
+        <div class="pagination d-flex flex-row justify-content-between">
+          <button @click="prevPage" :disabled="pageNum === 1">Previous</button>
+          <span>Page {{ searchResults.page }} of {{ searchResults.total_page }}</span>
+          <button @click="nextPage" :disabled="pageNum === searchResults.total_pages">Next</button>
+        </div>
       </div>
     </div>
-        </div>
-   
     <div class="footer"></div>
   `,
 };
